@@ -1,7 +1,9 @@
+import json
 from typing import Optional
 
 from fastapi import Body, Depends, Header
 from pydantic import BaseModel
+from starlette.responses import JSONResponse
 
 from fastapi_ext.view import View, api, get, post
 
@@ -40,6 +42,7 @@ class ExampleView(View):
 
     @get()
     def query(self, params: _QueryParams = Depends()):
+        """ example docs """
         return _RichQueryResult(
             a=params.a,
             b=params.b,
@@ -69,8 +72,9 @@ class ExampleView(View):
     @post("/action")
     async def nested_post_action(
         self, payload: _ActionPayload = Body(...)
-    ) -> _ActionResult:
-        return await self.post_action(payload)
+    ) -> JSONResponse:
+        result = await self.post_action(payload)
+        return JSONResponse(content=json.loads(result.json()))
 
     @post("/action-1")
     @post("/action-2")

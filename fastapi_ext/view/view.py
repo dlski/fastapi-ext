@@ -21,7 +21,7 @@ from fastapi import APIRouter
 from fastapi.params import Body, Depends, Param
 from pydantic.typing import is_classvar
 
-from fastapi_ext.view._utils import desc_unwrap, is_routine_or_call_desc
+from fastapi_ext.view._utils import ClassMembers, desc_unwrap
 
 _undefined = object()
 _ParamTypeSet = (Param, Body, Depends)
@@ -104,10 +104,12 @@ class _ViewEndpoint:
 
     def api_route_args(self, instance) -> Dict[str, Any]:
         method = getattr(instance, self.attr_name)
+        func = desc_unwrap(method)
         signature = inspect.signature(method)
 
         endpoint_fn = self._endpoint_fn(method)
         endpoint_fn.__name__ = f"{type(instance).__name__}__{self.attr_name}"
+        endpoint_fn.__doc__ = func.__doc__
         endpoint_fn.__signature__ = signature.replace(
             parameters=[
                 *signature.parameters.values(),
@@ -150,13 +152,11 @@ class _ViewEndpointSetFactory:
 
     @classmethod
     def _method_routes(cls, clazz: Type) -> Iterator[Tuple[str, Dict[str, Any]]]:
-        for name, method in inspect.getmembers(
-            clazz, predicate=is_routine_or_call_desc
-        ):
+        for name, func in ClassMembers.all_class_fns(clazz):
             # only public methods
             if name.startswith("_"):
                 continue
-            route_args_set = _ViewEndpointRouteArgs.find(method)
+            route_args_set = _ViewEndpointRouteArgs.find(func)
             for route_args in route_args_set:
                 yield name, route_args
 

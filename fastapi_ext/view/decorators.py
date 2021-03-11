@@ -116,7 +116,12 @@ def route(
         # infer response_model from function return type hint
         infer = args.pop("response_model_infer")
         if infer and args["response_model"] is None:
-            args["response_model"] = get_type_hints(desc_unwrap(member)).get("return")
+            return_type = get_type_hints(desc_unwrap(member)).get("return")
+            if isinstance(return_type, type) and issubclass(return_type, Response):
+                # skip response class fail
+                pass
+            else:
+                args["response_model"] = return_type
         # add route args
         _ViewEndpointRouteArgs.add(member, args)
         return member
