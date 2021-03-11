@@ -39,12 +39,12 @@ def _wrap_api(fn):
                 or type_ is View
             ):
                 raise TypeError("Decorator should be applied to View subclass")
-            if len(args) > 1:
-                raise TypeError(
-                    f"TypeError: api() takes 1 "
-                    f"positional arguments but {len(args)} was given"
-                )
-            else:
+            if "prefix" not in kwargs:
+                if len(args) > 1:
+                    raise TypeError(
+                        f"TypeError: api() takes 1 "
+                        f"positional arguments but {len(args)} was given"
+                    )
                 kwargs["prefix"] = args[0] if args else ""
             type_.__router_args__.update(kwargs)
             return type_

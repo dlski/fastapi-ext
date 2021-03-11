@@ -83,6 +83,6 @@ class ExampleView(View):
         return self.user_agent or ""
 
 
-@api("/other-view")
+@api(prefix="/other-view")
 class OtherView(ExampleView):
     pass
