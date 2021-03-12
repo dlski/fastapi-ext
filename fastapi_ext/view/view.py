@@ -1,4 +1,5 @@
 import inspect
+import re
 from contextvars import ContextVar
 from inspect import Signature
 from typing import (
@@ -96,6 +97,7 @@ class _ViewCtxCatchFactory:
 
 class _ViewEndpoint:
     CTX_ARG = "__ctx__"
+    VIEW_NAME = "View"
 
     def __init__(self, ctx_catch: Callable, attr_name: str, route_args: Dict[str, Any]):
         self.ctx_catch = ctx_catch
@@ -108,7 +110,9 @@ class _ViewEndpoint:
         signature = inspect.signature(method)
 
         endpoint_fn = self._endpoint_fn(method)
-        endpoint_fn.__name__ = f"{type(instance).__name__}__{self.attr_name}"
+        endpoint_fn.__name__ = (
+            f"{self._view_snake_name(type(instance))}__{self.attr_name}"
+        )
         endpoint_fn.__doc__ = func.__doc__
         endpoint_fn.__signature__ = signature.replace(
             parameters=[
@@ -138,6 +142,14 @@ class _ViewEndpoint:
                     return method(*args, **kwargs)
 
         return _endpoint_fn
+
+    @classmethod
+    def _view_snake_name(cls, clazz: Type):
+        name = clazz.__name__
+        if name.endswith(cls.VIEW_NAME):
+            name = name[: -len(cls.VIEW_NAME)]
+        name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
 
 
 class _ViewEndpointSetFactory:
