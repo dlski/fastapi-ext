@@ -17,10 +17,10 @@ from fastapi.params import Body, Depends, Param
 from pydantic.typing import is_classvar
 
 _undefined = object()
-ParamTypeSet = (Param, Body, Depends)
-ParamType = Union[ParamTypeSet]
 _ctx = ContextVar("view_request_context", default=cast(Dict[str, Any], None))
+ParamTypeSet = (Param, Body, Depends)
 
+ParamType = Union[ParamTypeSet]
 RequestCtxCatchFn = Callable[..., Dict[str, Any]]
 
 
