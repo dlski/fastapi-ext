@@ -74,9 +74,9 @@ class RequestCtxParam:
             value = getattr(clazz, name, _undefined)
             if isinstance(value, ParamTypeSet):
                 yield RequestCtxParam(name, hint, value)
-            if isinstance(value, RequestCtxParam):
+            elif isinstance(value, RequestCtxParam):
                 yield value.clone()
-            if value is ...:
+            elif value is ...:
                 yield RequestCtxParam(name, hint, ...)
 
     @classmethod
