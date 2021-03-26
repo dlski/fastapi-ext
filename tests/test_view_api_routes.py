@@ -1,20 +1,20 @@
-import httpx
 import pytest
 from fastapi import FastAPI
+from starlette.testclient import TestClient
 
 # noinspection PyProtectedMember
 from fastapi_ext.view._routes import RouteEntryManager
-from tests._view import ExampleView, OtherView
+from tests._api_view import ExampleView, OtherView
 
 
 @pytest.fixture
-def client() -> httpx.AsyncClient:
+def client() -> TestClient:
     example_router = ExampleView(setting="example").router
     other_router = OtherView(setting="other").router
     app = FastAPI()
     app.include_router(example_router)
     app.include_router(other_router)
-    return httpx.AsyncClient(app=app, base_url="http://localhost")
+    return TestClient(app=app, base_url="http://localhost")
 
 
 def test_internals():
@@ -30,18 +30,14 @@ def test_internals():
         ("/other-view", {"a": 5, "b": "other test"}, "other"),
     ],
 )
-@pytest.mark.asyncio
-async def test_view_sync_get(
-    client: httpx.AsyncClient, url: str, params: dict, setting: str
-):
-    async with client:
-        response = await client.get(url, params=params)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["a"] == params.get("a", 0)
-        assert data["b"] == params.get("b", "")
-        assert "httpx" in data["user_agent"]
-        assert data["setting"] == setting
+def test_view_sync_get(client: TestClient, url: str, params: dict, setting: str):
+    response = client.get(url, params=params)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["a"] == params.get("a", 0)
+    assert data["b"] == params.get("b", "")
+    assert "testclient" in data["user_agent"]
+    assert data["setting"] == setting
 
 
 @pytest.mark.parametrize(
@@ -51,16 +47,12 @@ async def test_view_sync_get(
         ("/example-view/nested-2", {"a": 10, "b": "test"}, "example"),
     ],
 )
-@pytest.mark.asyncio
-async def test_view_sync_get_nested(
-    client: httpx.AsyncClient, url: str, params: dict, setting: str
-):
-    async with client:
-        response = await client.get(url, params=params)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["a"] == params.get("a", 0)
-        assert data["b"] == params.get("b", "")
+def test_view_sync_get_nested(client: TestClient, url: str, params: dict, setting: str):
+    response = client.get(url, params=params)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["a"] == params.get("a", 0)
+    assert data["b"] == params.get("b", "")
 
 
 @pytest.mark.parametrize(
@@ -73,16 +65,12 @@ async def test_view_sync_get_nested(
         ("/other-view", {"x": 5, "y": "other test"}, "other"),
     ],
 )
-@pytest.mark.asyncio
-async def test_view_async_post(
-    client: httpx.AsyncClient, url: str, payload: dict, setting: str
-):
-    async with client:
-        response = await client.post(url, json=payload)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["message"] == f"{payload['x']} {payload['y']} {setting}"
-        assert "httpx" in data["user_agent"]
+def test_view_async_post(client: TestClient, url: str, payload: dict, setting: str):
+    response = client.post(url, json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == f"{payload['x']} {payload['y']} {setting}"
+    assert "testclient" in data["user_agent"]
 
 
 def test_view_response_model_infer():

@@ -34,11 +34,14 @@ class APIRouteEntry(RouteEntry):
 
 class APIWebsocketRouteEntry(RouteEntry):
     def install(self, endpoint: CallableType, router: APIRouter):
-        router.add_api_websocket_route(endpoint=endpoint, **self.args)
+        # fix nested path for websocket routes
+        args = {**self.args, "path": f"{router.prefix}{self.args['path']}"}
+        # add api websocket route
+        router.add_api_websocket_route(endpoint=endpoint, **args)
 
 
 class RouteEntryManager:
-    prop_name: ClassVar[str] = "__route_entries__"
+    prop_name: ClassVar[str] = "_route_entries"
 
     @classmethod
     def find(cls, func: CallableType) -> Collection[RouteEntry]:
@@ -69,23 +72,16 @@ class RouteEntryManager:
                 yield name, entry
 
 
-class RouteInstaller:
+class RouteEndpointFactory:
     ctx_arg_name: ClassVar[str] = "__ctx__"
 
-    def __init__(
-        self, parent_snake_name: str, ctx_catch: RequestCtxCatchFn, router: APIRouter
-    ):
+    def __init__(self, parent_snake_name: str, ctx_catch: RequestCtxCatchFn):
         self.parent_snake_name = parent_snake_name
         self.ctx_catch = ctx_catch
-        self.router = router
 
-    def install(
-        self, method: Callable, entry: RouteEntry, attr_name: Optional[str] = None
-    ):
-        endpoint_fn = self._endpoint_fn(method=method, attr_name=attr_name)
-        entry.install(endpoint=endpoint_fn, router=self.router)
-
-    def _endpoint_fn(self, method: Callable, attr_name: Optional[str]) -> CallableType:
+    def from_method(
+        self, method: Callable[..., Any], attr_name: Optional[str] = None
+    ) -> CallableType:
         signature = inspect.signature(method)
         func = desc_unwrap(method)
         attr_name = attr_name or func.__name__
@@ -106,18 +102,38 @@ class RouteInstaller:
         return endpoint_fn
 
     @classmethod
-    def _endpoint_body(cls, method: Callable) -> CallableType:
+    def _endpoint_body(cls, cb: Callable[..., Any]) -> Callable[..., Any]:
+        assert callable(cb), "Provided object is not callable"
         arg_name = cls.ctx_arg_name
-        if inspect.iscoroutinefunction(method):
+        # noinspection PyUnresolvedReferences
+        routine = cb if inspect.isroutine(cb) else cb.__call__
+        if inspect.iscoroutinefunction(routine):
 
             async def _endpoint_fn(*args, **kwargs):
                 with RequestCtx(kwargs.pop(arg_name)):
-                    return await method(*args, **kwargs)
+                    return await cb(*args, **kwargs)
 
         else:
 
             def _endpoint_fn(*args, **kwargs):
                 with RequestCtx(kwargs.pop(arg_name)):
-                    return method(*args, **kwargs)
+                    return cb(*args, **kwargs)
 
         return _endpoint_fn
+
+
+class RouteInstaller:
+    def __init__(self, endpoint_factory: RouteEndpointFactory, router: APIRouter):
+        self.endpoint_factory = endpoint_factory
+        self.router = router
+
+    def install(
+        self,
+        method: Callable[..., Any],
+        entry: RouteEntry,
+        attr_name: Optional[str] = None,
+    ):
+        endpoint_fn = self.endpoint_factory.from_method(
+            method=method, attr_name=attr_name
+        )
+        entry.install(endpoint=endpoint_fn, router=self.router)

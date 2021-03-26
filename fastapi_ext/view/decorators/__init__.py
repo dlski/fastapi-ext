@@ -8,7 +8,6 @@ from typing import (
     Optional,
     Sequence,
     Type,
-    TypeVar,
     Union,
     get_type_hints,
 )
@@ -28,10 +27,24 @@ from fastapi_ext.view._routes import (
     RouteEntryManager,
 )
 from fastapi_ext.view._utils import desc_unwrap
-from fastapi_ext.view.view import View
+from fastapi_ext.view._view import View
+from fastapi_ext.view.decorators.types import DecoratedMember, MemberType
 
-MemberType = Callable[..., Any]
-DecoratedMember = TypeVar("DecoratedMember", bound=MemberType)
+__all__ = [
+    # view decorator
+    "api",
+    # endpoint decorators
+    "route",
+    "websocket",
+    "get",
+    "put",
+    "post",
+    "delete",
+    "options",
+    "head",
+    "patch",
+    "trace",
+]
 
 
 def _wrap_api(fn):
@@ -134,8 +147,13 @@ def route(
 
 
 def websocket(
-    path: str, *, name: Optional[str] = None
+    path: str = "", *, name: Optional[str] = None
 ) -> Callable[[DecoratedMember], DecoratedMember]:
+    if path:
+        if not path.startswith("/"):
+            raise ValueError("Path should start with /")
+        if path.endswith("/"):
+            raise ValueError("Path should not end with /")
     args = dict(locals())
 
     def decorator(member: MemberType) -> MemberType:

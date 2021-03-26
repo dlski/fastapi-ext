@@ -3,8 +3,12 @@ from types import FunctionType
 from typing import Any, Iterator, Set, Tuple, Type, cast
 
 
+def is_any_method(func) -> bool:
+    return inspect.ismethod(func) or isinstance(func, (classmethod, staticmethod))
+
+
 def desc_unwrap(func) -> FunctionType:
-    if inspect.ismethod(func) or isinstance(func, (classmethod, staticmethod)):
+    if is_any_method(func):
         return cast(FunctionType, func.__func__)
     return func
 
