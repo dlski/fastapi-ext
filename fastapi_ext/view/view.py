@@ -8,10 +8,11 @@ from fastapi_ext.view._routes import RouteEntry, RouteEntryManager, RouteInstall
 
 
 class View:
+    _route_entries: ClassVar[Sequence[Tuple[str, RouteEntry]]] = ()
+    _request_params: ClassVar[Collection[RequestCtxParam]]
+
     __router_args__: ClassVar[dict] = {}
     __router__: Optional[APIRouter] = None
-    __route_entries__: ClassVar[Sequence[Tuple[str, RouteEntry]]] = ()
-    __request_params__: ClassVar[Collection[RequestCtxParam]]
     __snake_name__: ClassVar[str] = ""
 
     def __init_subclass__(cls, **kwargs):
@@ -20,10 +21,10 @@ class View:
         )
         cls.__router_args__ = {**first_parent_view.__router_args__}
 
-        cls.__request_params__ = [*RequestCtxParam.from_class_attributes(cls)]
-        for param in cls.__request_params__:
+        cls._request_params = [*RequestCtxParam.from_class_attributes(cls)]
+        for param in cls._request_params:
             setattr(cls, param.name, param)
-        cls.__route_entries__ = [*RouteEntryManager.class_all(cls)]
+        cls._route_entries = [*RouteEntryManager.class_all(cls)]
         cls.__snake_name__ = cls.__get_snake_name__(cls.__name__)
 
     @classmethod
@@ -45,12 +46,12 @@ class View:
         return APIRouter(**self.__router_args__)
 
     def __router_add_routes__(self, router: APIRouter):
-        ctx_catch = RequestCtxParam.ctx_catch_fn(self.__request_params__)
+        ctx_catch = RequestCtxParam.ctx_catch_fn(self._request_params)
         installer = RouteInstaller(
             parent_snake_name=self.__snake_name__,
             ctx_catch=ctx_catch,
             router=router,
         )
-        for name, entry in self.__route_entries__:
+        for name, entry in self._route_entries:
             method = getattr(self, name)
             installer.install(method=method, entry=entry, attr_name=name)
