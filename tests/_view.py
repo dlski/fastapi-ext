@@ -8,27 +8,27 @@ from starlette.responses import JSONResponse
 from fastapi_ext.view import View, api, get, post
 
 
-class _QueryParams(BaseModel):
+class QueryParams(BaseModel):
     a: int = 0
     b: str = ""
 
 
-class _QueryResult(BaseModel):
+class QueryResult(BaseModel):
     a: int
     b: str
 
 
-class _RichQueryResult(_QueryResult):
+class RichQueryResult(QueryResult):
     user_agent: Optional[str]
     setting: str
 
 
-class _ActionPayload(BaseModel):
+class ActionPayload(BaseModel):
     x: int
     y: str
 
 
-class _ActionResult(BaseModel):
+class ActionResult(BaseModel):
     message: str
     user_agent: str
 
@@ -41,9 +41,9 @@ class ExampleView(View):
         self.setting = setting
 
     @get()
-    def query(self, params: _QueryParams = Depends()):
+    def query(self, params: QueryParams = Depends()):
         """ example docs """
-        return _RichQueryResult(
+        return RichQueryResult(
             a=params.a,
             b=params.b,
             user_agent=self._prepare_user_agent(),
@@ -53,25 +53,25 @@ class ExampleView(View):
     # noinspection PyNestedDecorators
     @get("/nested-1")
     @classmethod
-    def nested_cls_query(cls, params: _QueryParams = Depends()) -> _QueryResult:
-        return _QueryResult(**params.dict())
+    def nested_cls_query(cls, params: QueryParams = Depends()) -> QueryResult:
+        return QueryResult(**params.dict())
 
     # noinspection PyNestedDecorators
     @get("/nested-2")
     @staticmethod
-    def nested_static_query(params: _QueryParams = Depends()) -> _QueryResult:
-        return _QueryResult(**params.dict())
+    def nested_static_query(params: QueryParams = Depends()) -> QueryResult:
+        return QueryResult(**params.dict())
 
     @post()
-    async def post_action(self, payload: _ActionPayload = Body(...)) -> _ActionResult:
-        return _ActionResult(
+    async def post_action(self, payload: ActionPayload = Body(...)) -> ActionResult:
+        return ActionResult(
             message=f"{payload.x} {payload.y} {self.setting}",
             user_agent=self._prepare_user_agent(),
         )
 
     @post("/action")
     async def nested_post_action(
-        self, payload: _ActionPayload = Body(...)
+        self, payload: ActionPayload = Body(...)
     ) -> JSONResponse:
         result = await self.post_action(payload)
         return JSONResponse(content=json.loads(result.json()))
@@ -79,8 +79,8 @@ class ExampleView(View):
     @post("/action-1")
     @post("/action-2")
     async def double_post_action(
-        self, payload: _ActionPayload = Body(...)
-    ) -> _ActionResult:
+        self, payload: ActionPayload = Body(...)
+    ) -> ActionResult:
         return await self.post_action(payload)
 
     def _prepare_user_agent(self) -> str:

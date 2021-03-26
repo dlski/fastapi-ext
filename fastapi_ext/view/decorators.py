@@ -22,10 +22,15 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import BaseRoute
 from starlette.types import ASGIApp
 
+from fastapi_ext.view._routes import (
+    APIRouteEntry,
+    APIWebsocketRouteEntry,
+    RouteEntryManager,
+)
 from fastapi_ext.view._utils import desc_unwrap
-from fastapi_ext.view.view import View, _ViewEndpointRouteArgs
+from fastapi_ext.view.view import View
 
-MemberType = Union[Callable[..., Any], classmethod, staticmethod]
+MemberType = Callable[..., Any]
 DecoratedMember = TypeVar("DecoratedMember", bound=MemberType)
 
 
@@ -122,8 +127,21 @@ def route(
                 pass
             else:
                 args["response_model"] = return_type
-        # add route args
-        _ViewEndpointRouteArgs.add(member, args)
+        RouteEntryManager.add(member, APIRouteEntry(args))
+        return member
+
+    return decorator
+
+
+def websocket(
+    path: str, *, name: Optional[str] = None
+) -> Callable[[DecoratedMember], DecoratedMember]:
+    args = dict(locals())
+
+    def decorator(member: MemberType) -> MemberType:
+        if not inspect.isroutine(member):
+            raise TypeError("Decorator should be applied to routine")
+        RouteEntryManager.add(member, APIWebsocketRouteEntry(args))
         return member
 
     return decorator

@@ -3,7 +3,7 @@ import pytest
 from fastapi import FastAPI
 
 # noinspection PyProtectedMember
-from fastapi_ext.view.view import _ViewEndpointRouteArgs
+from fastapi_ext.view._routes import RouteEntryManager
 from tests._view import ExampleView, OtherView
 
 
@@ -86,6 +86,6 @@ async def test_view_async_post(
 
 
 def test_view_response_model_infer():
-    args_set = _ViewEndpointRouteArgs.find(ExampleView.post_action)
-    for args in args_set:
-        assert args["response_model"] is not None
+    entries = RouteEntryManager.find(ExampleView.post_action)
+    for entry in entries:
+        assert entry.args["response_model"] is not None
