@@ -1,11 +1,24 @@
 [tool.poetry]
 name = "fastapi-ext"
-version = "0.2.1"
+version = "0.2.2"
 description = "FastAPI extensions focused on productivity"
 authors = ["Damian Łukawski <damian@lukawscy.pl>"]
 license = "MIT"
 packages = [
     { include = "fastapi_ext" },
+]
+readme = "README.md"
+homepage = "https://github.com/dlski/fastapi-ext"
+repository = "https://github.com/dlski/fastapi-ext"
+keywords = ["fastapi", "extensions"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3 :: Only",
 ]
 
 [tool.poetry.dependencies]
