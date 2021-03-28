@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-ext"
-version = "0.2.0"
+version = "0.2.1"
 description = "FastAPI extensions focused on productivity"
 authors = ["Damian Łukawski <damian@lukawscy.pl>"]
 license = "MIT"
@@ -10,7 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.7 <3.10"
-fastapi = { version = "^0.63.0" }
+fastapi = { version = ">=0.62.0" }
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

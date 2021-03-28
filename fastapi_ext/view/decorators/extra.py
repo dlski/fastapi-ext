@@ -21,7 +21,9 @@ def depends(*dependencies) -> Callable[[ExtendDecoratedMember], ExtendDecoratedM
     )
 
 
-def authorized(*scopes: str):
+def authorized(
+    *scopes: str,
+) -> Callable[[ExtendDecoratedMember], ExtendDecoratedMember]:
     """
     Adds endpoint route or View subclass dependency,
     that checks is user authenticated and authorized within provided scopes.

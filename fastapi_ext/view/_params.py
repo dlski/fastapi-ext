@@ -57,10 +57,10 @@ class RequestCtxParam:
             return self
         ctx = _ctx.get()
         if ctx is None:
-            raise RuntimeError("Cannot get request property outside request context")
+            raise LookupError("Cannot get request property outside request context")
         try:
             return ctx[self.name]
-        except KeyError:
+        except KeyError:  # pragma: no cover
             raise AssertionError(f"Request property {self.name} not set")
 
     def __set__(self, instance, value):
@@ -76,8 +76,6 @@ class RequestCtxParam:
                 yield RequestCtxParam(name, hint, value)
             elif isinstance(value, RequestCtxParam):
                 yield value.clone()
-            elif value is ...:
-                yield RequestCtxParam(name, hint, ...)
 
     @classmethod
     def ctx_catch_fn(cls, params: Collection["RequestCtxParam"]) -> RequestCtxCatchFn:
