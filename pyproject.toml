@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-ext"
-version = "0.2.3"
+version = "0.2.4"
 description = "FastAPI extensions focused on productivity"
 authors = ["Damian Łukawski <damian@lukawscy.pl>"]
 license = "MIT"
